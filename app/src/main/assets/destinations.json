@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "homeBase": "home base",
+  "destinations": [
+    {
+      "id": "bima_101",
+      "displayName": "비마관 101호",
+      "category": "강의실",
+      "building": "비마관",
+      "route": [
+        { "location": "bima_junction_a", "say": "여기서 왼쪽으로 갑니다" },
+        { "location": "bima_101", "say": "" }
+      ],
+      "arrivalMessage": "비마관 101호에 도착했습니다. 오른쪽 문입니다."
+    },
+    {
+      "id": "bima_104",
+      "displayName": "비마관 104호",
+      "category": "강의실",
+      "building": "비마관",
+      "route": [
+        { "location": "bima_junction_a", "say": "여기서 직진합니다" },
+        { "location": "bima_junction_b", "say": "여기서 오른쪽으로 갑니다" },
+        { "location": "bima_104", "say": "" }
+      ],
+      "arrivalMessage": "비마관 104호에 도착했습니다. 왼쪽 문입니다."
+    },
+    {
+      "id": "bima_dept_office",
+      "displayName": "로봇학부 사무실",
+      "category": "학과 사무실",
+      "building": "비마관",
+      "route": [
+        { "location": "bima_junction_a", "say": "여기서 오른쪽으로 갑니다" },
+        { "location": "bima_dept_office", "say": "" }
+      ],
+      "arrivalMessage": "로봇학부 사무실에 도착했습니다. 정면에 보이는 문입니다."
+    },
+    {
+      "id": "bima_lab_mobile",
+      "displayName": "모바일로봇 연구실",
+      "category": "연구실",
+      "building": "비마관",
+      "route": [
+        { "location": "bima_junction_b", "say": "여기서 왼쪽 복도로 갑니다" },
+        { "location": "bima_lab_mobile", "say": "" }
+      ],
+      "arrivalMessage": "모바일로봇 연구실에 도착했습니다. 출입 전에 노크해 주세요."
+    },
+    {
+      "id": "saebit_105",
+      "displayName": "새빛관 105호",
+      "category": "강의실",
+      "building": "새빛관",
+      "route": [
+        { "location": "saebit_junction_a", "say": "여기서 왼쪽으로 갑니다" },
+        { "location": "saebit_105", "say": "" }
+      ],
+      "arrivalMessage": "새빛관 105호에 도착했습니다. 오른쪽 문입니다."
+    },
+    {
+      "id": "saebit_support",
+      "displayName": "학생지원팀",
+      "category": "학과 사무실",
+      "building": "새빛관",
+      "route": [
+        { "location": "saebit_junction_a", "say": "여기서 직진합니다" },
+        { "location": "saebit_support", "say": "" }
+      ],
+      "arrivalMessage": "학생지원팀에 도착했습니다. 왼쪽 창구로 가시면 됩니다."
+    },
+    {
+      "id": "saebit_lab_ai",
+      "displayName": "지능로봇 연구실",
+      "category": "연구실",
+      "building": "새빛관",
+      "route": [
+        { "location": "saebit_junction_a", "say": "여기서 오른쪽으로 갑니다" },
+        { "location": "saebit_stair_front", "say": "앞에 계단이 있습니다. 조심해서 따라와 주세요" },
+        { "location": "saebit_lab_ai", "say": "" }
+      ],
+      "arrivalMessage": "지능로봇 연구실에 도착했습니다. 복도 끝 왼쪽 방입니다."
+    }
+  ]
+}
