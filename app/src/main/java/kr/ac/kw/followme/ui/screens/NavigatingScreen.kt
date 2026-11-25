@@ -31,7 +31,7 @@ fun NavigatingScreen(
         pulsing = true,
         eyebrow = "안내 중",
         title = dest.displayName,
-        subtitle = "제 뒤를 따라와 주세요.",
+        subtitle = if (dest.viaElevator) "${dest.finalLocation}까지 제 뒤를 따라와 주세요." else "제 뒤를 따라와 주세요.",
         body = { RouteProgress(total = dest.route.size, current = seg, accent = AccentPalette.Navigate) },
         actions = {
             SecondaryButton(text = "안내 취소", icon = Icons.Rounded.Close, onClick = onCancel)
@@ -93,5 +93,5 @@ private fun NavigatingScreenPreview() {
 @Preview(widthDp = 1280, heightDp = 800)
 @Composable
 private fun WaypointGuideScreenPreview() {
-    FollowMeTheme { WaypointGuideScreen(dest = sampleDestination, seg = 1, onCancel = {}) }
+    FollowMeTheme { WaypointGuideScreen(dest = sampleDestination, seg = 0, onCancel = {}) }
 }

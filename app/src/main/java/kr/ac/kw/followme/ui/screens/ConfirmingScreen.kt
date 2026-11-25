@@ -29,6 +29,7 @@ fun ConfirmingScreen(
     onConfirm: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    departureMessage: String? = null,
 ) {
     StatusScreen(
         modifier = modifier,
@@ -36,10 +37,10 @@ fun ConfirmingScreen(
         icon = Icons.Rounded.Place,
         eyebrow = "선택한 목적지",
         title = dest.displayName,
-        subtitle = "선택한 목적지로 안내합니다. 따라오세요.",
         body = {
             Text(
-                text = "안내 구간 ${dest.route.size}단계 · 천천히 이동합니다",
+                text = departureMessage ?: if (dest.viaElevator) "${dest.floor}층 강의실입니다. ${dest.finalLocation}까지 함께 이동합니다."
+                    else "안내 구간 ${dest.route.size}단계 · 천천히 이동합니다",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

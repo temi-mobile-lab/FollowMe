@@ -1,85 +1,252 @@
 {
-  "version": 1,
+  "version": 2,
   "homeBase": "home base",
   "destinations": [
     {
-      "id": "bima_101",
-      "displayName": "비마관 101호",
-      "category": "강의실",
-      "building": "비마관",
-      "route": [
-        { "location": "bima_junction_a", "say": "여기서 왼쪽으로 갑니다" },
-        { "location": "bima_101", "say": "" }
-      ],
-      "arrivalMessage": "비마관 101호에 도착했습니다. 오른쪽 문입니다."
+      "id": "saebit_entrance",
+      "displayName": "새빛관 출입문",
+      "voiceAliases": ["출입문", "입구", "출입구", "새빛관 입구", "새빛관 출입구"],
+      "category": "출입구",
+      "building": "새빛관",
+      "route": [{"location": "새빛관 출입문", "say": ""}],
+      "arrivalMessage": "새빛관 출입문에 도착했습니다.",
+      "floor": 1
     },
     {
-      "id": "bima_104",
-      "displayName": "비마관 104호",
-      "category": "강의실",
-      "building": "비마관",
-      "route": [
-        { "location": "bima_junction_a", "say": "여기서 직진합니다" },
-        { "location": "bima_junction_b", "say": "여기서 오른쪽으로 갑니다" },
-        { "location": "bima_104", "say": "" }
-      ],
-      "arrivalMessage": "비마관 104호에 도착했습니다. 왼쪽 문입니다."
+      "id": "saebit_elevator_1f",
+      "displayName": "1층 엘리베이터",
+      "voiceAliases": ["엘리베이터", "일층 엘리베이터", "엘레베이터", "승강기"],
+      "category": "편의시설",
+      "building": "새빛관",
+      "floor": 1,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 휴대폰으로 QR 코드를 스캔하면 새빛관 층별 안내도를 볼 수 있어요."
     },
     {
-      "id": "bima_dept_office",
-      "displayName": "로봇학부 사무실",
-      "category": "학과 사무실",
-      "building": "비마관",
-      "route": [
-        { "location": "bima_junction_a", "say": "여기서 오른쪽으로 갑니다" },
-        { "location": "bima_dept_office", "say": "" }
-      ],
-      "arrivalMessage": "로봇학부 사무실에 도착했습니다. 정면에 보이는 문입니다."
-    },
-    {
-      "id": "bima_lab_mobile",
-      "displayName": "모바일로봇 연구실",
-      "category": "연구실",
-      "building": "비마관",
-      "route": [
-        { "location": "bima_junction_b", "say": "여기서 왼쪽 복도로 갑니다" },
-        { "location": "bima_lab_mobile", "say": "" }
-      ],
-      "arrivalMessage": "모바일로봇 연구실에 도착했습니다. 출입 전에 노크해 주세요."
-    },
-    {
-      "id": "saebit_105",
-      "displayName": "새빛관 105호",
+      "id": "saebit_room_101",
+      "displayName": "101호",
+      "voiceAliases": ["101", "백일호", "101호 강의실"],
       "category": "강의실",
       "building": "새빛관",
-      "route": [
-        { "location": "saebit_junction_a", "say": "여기서 왼쪽으로 갑니다" },
-        { "location": "saebit_105", "say": "" }
-      ],
-      "arrivalMessage": "새빛관 105호에 도착했습니다. 오른쪽 문입니다."
+      "floor": 1,
+      "route": [{"location": "101호", "say": ""}],
+      "arrivalMessage": "101호에 도착했습니다."
     },
     {
-      "id": "saebit_support",
-      "displayName": "학생지원팀",
-      "category": "학과 사무실",
+      "id": "saebit_room_102",
+      "displayName": "102호",
+      "voiceAliases": ["102", "백이호", "102호 강의실"],
+      "category": "강의실",
       "building": "새빛관",
-      "route": [
-        { "location": "saebit_junction_a", "say": "여기서 직진합니다" },
-        { "location": "saebit_support", "say": "" }
-      ],
-      "arrivalMessage": "학생지원팀에 도착했습니다. 왼쪽 창구로 가시면 됩니다."
+      "floor": 1,
+      "route": [{"location": "102호", "say": ""}],
+      "arrivalMessage": "102호에 도착했습니다."
     },
     {
-      "id": "saebit_lab_ai",
-      "displayName": "지능로봇 연구실",
-      "category": "연구실",
+      "id": "saebit_room_103",
+      "displayName": "103호",
+      "voiceAliases": ["103", "백삼호", "103호 강의실"],
+      "category": "강의실",
       "building": "새빛관",
-      "route": [
-        { "location": "saebit_junction_a", "say": "여기서 오른쪽으로 갑니다" },
-        { "location": "saebit_stair_front", "say": "앞에 계단이 있습니다. 조심해서 따라와 주세요" },
-        { "location": "saebit_lab_ai", "say": "" }
-      ],
-      "arrivalMessage": "지능로봇 연구실에 도착했습니다. 복도 끝 왼쪽 방입니다."
+      "floor": 1,
+      "route": [{"location": "103호", "say": ""}],
+      "arrivalMessage": "103호에 도착했습니다."
+    },
+    {
+      "id": "saebit_room_104",
+      "displayName": "104호",
+      "voiceAliases": ["104", "백사호", "104호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 1,
+      "route": [{"location": "104호", "say": ""}],
+      "arrivalMessage": "104호에 도착했습니다."
+    },
+    {
+      "id": "saebit_room_105",
+      "displayName": "105호",
+      "voiceAliases": ["105", "백오호", "105호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 1,
+      "route": [{"location": "105호", "say": ""}],
+      "arrivalMessage": "105호에 도착했습니다."
+    },
+    {
+      "id": "saebit_room_106",
+      "displayName": "106호",
+      "voiceAliases": ["106", "백육호", "106호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 1,
+      "route": [{"location": "106호", "say": ""}],
+      "arrivalMessage": "106호에 도착했습니다."
+    },
+    {
+      "id": "saebit_room_201",
+      "displayName": "201호",
+      "voiceAliases": ["201", "이백일호", "201호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 201호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_202",
+      "displayName": "202호",
+      "voiceAliases": ["202", "이백이호", "202호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 202호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_203",
+      "displayName": "203호",
+      "voiceAliases": ["203", "이백삼호", "203호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 203호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_204",
+      "displayName": "204호",
+      "voiceAliases": ["204", "이백사호", "204호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 204호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_205",
+      "displayName": "205호",
+      "voiceAliases": ["205", "이백오호", "205호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 205호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_206",
+      "displayName": "206호",
+      "voiceAliases": ["206", "이백육호", "206호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 206호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_207",
+      "displayName": "207호",
+      "voiceAliases": ["207", "이백칠호", "207호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 2,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 2층으로 올라가세요. 층별 안내도에서 207호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_301",
+      "displayName": "301호",
+      "voiceAliases": ["301", "삼백일호", "301호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 301호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_302",
+      "displayName": "302호",
+      "voiceAliases": ["302", "삼백이호", "302호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 302호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_303",
+      "displayName": "303호",
+      "voiceAliases": ["303", "삼백삼호", "303호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 303호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_304",
+      "displayName": "304호",
+      "voiceAliases": ["304", "삼백사호", "304호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 304호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_305",
+      "displayName": "305호",
+      "voiceAliases": ["305", "삼백오호", "305호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 305호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_305_1",
+      "displayName": "305-1호",
+      "voiceAliases": ["305-1", "삼백오 다시 일호", "305-1호 강의실", "305 다시 1호", "305 다시 일호", "삼백오의 일호", "305의 1호"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 305-1호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_306",
+      "displayName": "306호",
+      "voiceAliases": ["306", "삼백육호", "306호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 306호 위치를 확인할 수 있어요."
+    },
+    {
+      "id": "saebit_room_307",
+      "displayName": "307호",
+      "voiceAliases": ["307", "삼백칠호", "307호 강의실"],
+      "category": "강의실",
+      "building": "새빛관",
+      "floor": 3,
+      "showFloorMap": true,
+      "route": [{"location": "1층 엘리베이터", "say": ""}],
+      "arrivalMessage": "1층 엘리베이터에 도착했습니다. 3층으로 올라가세요. 층별 안내도에서 307호 위치를 확인할 수 있어요."
     }
   ]
 }

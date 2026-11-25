@@ -52,6 +52,8 @@ fun FollowMeApp(
     modifier: Modifier = Modifier,
     maxRetry: Int = GuideTransitions.MAX_RETRY,
     onSimulateVoice: ((String) -> Unit)? = null,
+    onVoiceSetup: (() -> Unit)? = null,
+    departureMessage: String? = null,
 ) {
     FollowMeTheme {
         Surface(modifier = modifier.fillMaxSize()) {
@@ -64,7 +66,7 @@ fun FollowMeApp(
                 ) { _ ->
                     when (val s = state) {
                         is GuideState.Idle ->
-                            IdleScreen(onStart = { onEvent(GuideEvent.StartRequested) })
+                            IdleScreen(onStart = { onEvent(GuideEvent.StartRequested) }, onVoiceSetup = onVoiceSetup)
 
                         is GuideState.Selecting ->
                             SelectingScreen(
@@ -75,6 +77,7 @@ fun FollowMeApp(
 
                         is GuideState.Confirming ->
                             ConfirmingScreen(
+                                departureMessage = departureMessage,
                                 dest = s.dest,
                                 onConfirm = { onEvent(GuideEvent.UserConfirmed) },
                                 onBack = { onEvent(GuideEvent.UserCancelled) },
@@ -104,6 +107,8 @@ fun FollowMeApp(
                         is GuideState.Arrived ->
                             ArrivedScreen(
                                 dest = s.dest,
+                                destinations = destinations,
+                                onSelect = { onEvent(GuideEvent.DestinationSelected(it)) },
                                 onDone = { onEvent(GuideEvent.ArrivalConfirmed) },
                             )
 

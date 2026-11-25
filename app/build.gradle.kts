@@ -9,8 +9,8 @@ plugins {
 }
 
 // local.properties 는 .gitignore 에 들어 있어 커밋되지 않는다 — 비밀 키는 여기에만 둔다.
-// 팀원 각자 local.properties 에 아래 두 줄을 추가해야 빌드/배포가 된다:
-//   GEMINI_API_KEY=<발급받은 키>
+// 기본 음성 명령은 앱에서 해석한다. 추가 표현을 Gemini로 해석하려면 키를 설정한다.
+//   GEMINI_API_KEY=<선택 사항>
 //   USE_REAL_ROBOT=true   (실제 temi 에 배포할 때만. 에뮬레이터 개발 중엔 false 또는 생략)
 val localProps = Properties().apply {
     val f = rootProject.file("local.properties")

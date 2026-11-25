@@ -48,7 +48,12 @@ class DestinationRepository(private val context: Context) {
                         category = obj.optString("category", "기타"),
                         building = obj.optString("building", ""),
                         route = route,
+                        floor = obj.optInt("floor").takeIf { it > 0 },
+                        showFloorMap = obj.optBoolean("showFloorMap"),
                         arrivalMessage = obj.optString("arrivalMessage"),
+                        voiceAliases = obj.optJSONArray("voiceAliases")?.let { names ->
+                            (0 until names.length()).map { names.getString(it) }
+                        }.orEmpty(),
                     )
                 )
             }

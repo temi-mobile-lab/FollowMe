@@ -50,12 +50,10 @@ import kr.ac.kw.followme.data.sampleDestinations
 import kr.ac.kw.followme.ui.components.SecondaryButton
 import kr.ac.kw.followme.ui.theme.FollowMeTheme
 
-private const val ALL_CATEGORIES = "전체"
-
 /**
  * 2. 목적지 선택·검색 화면.
  *
- * 검색어와 카테고리 선택은 안내 로직과 무관한 화면 내부 상태라서 GuideState 로 올리지 않고
+ * 검색어와 층 선택은 안내 로직과 무관한 화면 내부 상태라서 GuideState 로 올리지 않고
  * 여기서만 들고 있는다. (화면 전환은 GuideState 만 보고 결정한다)
  */
 @Composable
@@ -66,18 +64,15 @@ fun SelectingScreen(
     modifier: Modifier = Modifier,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
-    var category by rememberSaveable { mutableStateOf(ALL_CATEGORIES) }
-
-    val categories = remember(destinations) {
-        listOf(ALL_CATEGORIES) + destinations.map { it.category }.distinct()
-    }
-    val filtered = remember(destinations, query, category) {
+    var selectedFloor by rememberSaveable { mutableStateOf<Int?>(null) }
+    val floors = remember(destinations) { destinations.mapNotNull { it.floor }.distinct().sorted() }
+    val filtered = remember(destinations, query, selectedFloor) {
+        val terms = query.trim().split(Regex("\\s+"))
         destinations.filter { dest ->
-            (category == ALL_CATEGORIES || dest.category == category) &&
-                (query.isBlank() ||
-                    dest.displayName.contains(query, ignoreCase = true) ||
-                    dest.building.contains(query, ignoreCase = true) ||
-                    dest.category.contains(query, ignoreCase = true))
+            val label = listOfNotNull(dest.building, dest.floor?.let { "${it}층" }, dest.displayName, dest.category)
+                .joinToString(" ")
+            (selectedFloor == null || selectedFloor == dest.floor) &&
+                terms.all { label.contains(it, ignoreCase = true) }
         }
     }
 
@@ -112,11 +107,14 @@ fun SelectingScreen(
                 .padding(top = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(categories, key = { it }) { item ->
+            item {
+                CategoryChip("전체", selectedFloor == null) { selectedFloor = null }
+            }
+            items(floors, key = { it }) { floor ->
                 CategoryChip(
-                    label = item,
-                    selected = item == category,
-                    onClick = { category = item },
+                    label = "${floor}층",
+                    selected = floor == selectedFloor,
+                    onClick = { selectedFloor = floor },
                 )
             }
         }
@@ -154,7 +152,7 @@ private fun SearchBox(
         shape = MaterialTheme.shapes.large,
         textStyle = MaterialTheme.typography.titleLarge,
         placeholder = {
-            Text("호실 번호나 이름으로 검색", style = MaterialTheme.typography.titleLarge)
+            Text("목적지 이름으로 검색", style = MaterialTheme.typography.titleLarge)
         },
         leadingIcon = {
             Icon(Icons.Rounded.Search, contentDescription = null, modifier = Modifier.size(40.dp))
@@ -234,7 +232,7 @@ private fun DestinationCard(
                     )
                 }
                 Text(
-                    text = listOf(dest.building, dest.category)
+                    text = listOfNotNull(dest.building, dest.floor?.let { "${it}층" }, dest.category)
                         .filter { it.isNotBlank() }
                         .joinToString(" \u00b7 "),
                     style = MaterialTheme.typography.titleSmall,

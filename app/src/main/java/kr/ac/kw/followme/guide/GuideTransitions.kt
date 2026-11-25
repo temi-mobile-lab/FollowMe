@@ -53,8 +53,7 @@ object GuideTransitions {
 
     private fun confirming(state: GuideState.Confirming, event: GuideEvent): GuideState = when (event) {
         is GuideEvent.UserConfirmed -> GuideState.Navigating(state.dest, seg = 0)
-        // "다시 선택" 버튼. 아직 출발 전이라 Returning 까지 갈 필요 없이 선택 화면으로.
-        is GuideEvent.UserCancelled -> GuideState.Selecting
+        is GuideEvent.UserCancelled -> state.arrivedFrom ?: GuideState.Selecting
         else -> state
     }
 
@@ -84,9 +83,13 @@ object GuideTransitions {
     }
 
     private fun arrived(state: GuideState.Arrived, event: GuideEvent): GuideState = when (event) {
+        is GuideEvent.DestinationSelected -> when {
+            event.dest.id == state.dest.id -> state
+            state.dest.showFloorMap && event.dest.showFloorMap &&
+                event.dest.finalLocation == state.dest.finalLocation -> GuideState.Arrived(event.dest)
+            else -> GuideState.Confirming(event.dest, arrivedFrom = state)
+        }
         is GuideEvent.ArrivalConfirmed -> GuideState.Returning
-        // Arrived 화면엔 취소 버튼이 없지만, 방어적으로 같은 결과(Returning)로 처리한다.
-        is GuideEvent.UserCancelled -> GuideState.Returning
         else -> state
     }
 

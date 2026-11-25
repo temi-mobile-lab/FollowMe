@@ -44,6 +44,9 @@ interface RobotController {
     /** 로봇(SDK)이 명령을 받을 준비가 됐는지. OnRobotReadyListener 대응. */
     fun isReady(): Boolean
 
+    /** 한국어 인식 결과를 이 앱에서 받을 수 있는지. */
+    fun isVoiceAvailable(): Boolean = isReady()
+
     /**
      * 음성 인식을 시작한다(temi 의 wakeup). 사람이 말을 마치면 결과가
      * [RobotListener.onSpeechRecognized] 로 온다. 마이크 권한은 필요 없다 — temi 런처가
@@ -81,6 +84,7 @@ interface RobotListener {
 
     /** 음성 인식 결과(사람이 한 말 전체 문장). */
     fun onSpeechRecognized(text: String) {}
+    fun onListeningEnded() {}
 
     /** (확장) 사람 감지 상태 변화. */
     fun onDetectionStateChanged(state: DetectionState) {}

@@ -132,6 +132,17 @@ class GuideTransitionsTest {
     // --- Arrived ------------------------------------------------------
 
     @Test
+    fun `도착 후 다음 목적지 확인을 취소하면 원래 도착 화면으로 돌아간다`() {
+        val arrived = GuideState.Arrived(dest)
+        val other = dest.copy(id = "another_dest")
+        val confirming = transition(arrived, GuideEvent.DestinationSelected(other))
+        assertEquals(GuideState.Confirming(other, arrivedFrom = arrived), confirming)
+        assertEquals(arrived, transition(confirming, GuideEvent.UserCancelled))
+        assertSame(arrived, transition(arrived, GuideEvent.DestinationSelected(dest)))
+        assertSame(arrived, transition(arrived, GuideEvent.Timeout))
+    }
+
+    @Test
     fun `Arrived에서 도착 확인을 누르면 Returning으로 전이한다`() {
         val state = GuideState.Arrived(dest)
         assertEquals(GuideState.Returning, transition(state, GuideEvent.ArrivalConfirmed))

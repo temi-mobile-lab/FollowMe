@@ -22,9 +22,15 @@ data class Destination(
     val building: String,
     val route: List<RouteStep>,
     val arrivalMessage: String,
+    val voiceAliases: List<String> = emptyList(),
+    val floor: Int? = null,
+    val showFloorMap: Boolean = false,
 ) {
-    /** 마지막 구간이 실제 목적지다. */
+    /** 테미가 동행하는 마지막 위치. 위층 강의실을 선택하면 엘리베이터다. */
     val finalLocation: String get() = route.last().location
+
+    val viaElevator: Boolean get() = showFloorMap && finalLocation != displayName
+    val arrivalPlaceName: String get() = if (viaElevator) finalLocation else displayName
 
     /** 경로에 등장하는 모든 temi 위치 이름 */
     val locations: List<String> get() = route.map { it.location }

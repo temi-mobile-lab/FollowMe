@@ -9,6 +9,9 @@ import kotlinx.coroutines.test.runTest
 import kr.ac.kw.followme.data.Destination
 import kr.ac.kw.followme.data.RouteStep
 import kr.ac.kw.followme.robot.FakeRobotController
+import kr.ac.kw.followme.robot.GoToStatus
+import kr.ac.kw.followme.robot.RobotListener
+import kr.ac.kw.followme.robot.RobotController
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,6 +37,54 @@ class GuideStateMachineTest {
     )
 
     private fun entries() = mutableListOf<GuideLogEntry>()
+
+    @Test
+    fun `엘리베이터에 실제 도착하면 다음 위층 호실도 제자리에서 안내한다`() = runTest {
+        val room = dest.copy(
+            id = "305_1", displayName = "305-1호", floor = 3, showFloorMap = true,
+            route = listOf(RouteStep("1층 엘리베이터", "")),
+        )
+        val machine = GuideStateMachine(FakeRobotController(backgroundScope), scope = backgroundScope)
+        machine.onEvent(GuideEvent.StartRequested)
+        machine.onEvent(GuideEvent.DestinationSelected(room))
+        machine.onEvent(GuideEvent.UserConfirmed)
+        machine.onGoToStatusChanged("새빛관 출입문", GoToStatus.COMPLETE, "")
+        assertEquals(GuideState.Navigating(room, 0), machine.state.value)
+        machine.onGoToStatusChanged("1층 엘리베이터", GoToStatus.COMPLETE, "")
+        assertEquals(GuideState.Arrived(room), machine.state.value)
+        assertEquals("1층 엘리베이터", room.arrivalPlaceName)
+
+        val next = room.copy(id = "201", displayName = "201호", floor = 2)
+        machine.onEvent(GuideEvent.DestinationSelected(next))
+        assertEquals(GuideState.Arrived(next), machine.state.value)
+        machine.onEvent(GuideEvent.DestinationSelected(dest))
+        assertEquals(GuideState.Confirming(dest, GuideState.Arrived(next)), machine.state.value)
+    }
+
+    @Test
+    fun `출발 확정 때만 따라오라는 안내를 한 번 읽는다`() = runTest {
+        val speech = mutableListOf<String>()
+        val fake = FakeRobotController(backgroundScope)
+        val robot = object : RobotController by fake {
+            override fun speak(text: String) {
+                speech += text
+                fake.speak(text)
+            }
+        }
+        val machine = GuideStateMachine(robot, scope = backgroundScope)
+        machine.start()
+        machine.onEvent(GuideEvent.StartRequested)
+        machine.onEvent(GuideEvent.DestinationSelected(dest))
+        assertEquals(listOf("${dest.displayName}까지 안내할까요?"), speech)
+        machine.onEvent(GuideEvent.UserConfirmed)
+        assertEquals("안내를 시작합니다. 저를 따라오세요.", speech.last())
+        machine.onEvent(GuideEvent.GoToAbort("재시도"))
+        machine.onEvent(GuideEvent.Timeout)
+        machine.onEvent(GuideEvent.GoToComplete)
+        machine.onEvent(GuideEvent.TtsCompleted)
+        assertEquals(1, speech.count { "따라오세요" in it })
+        machine.stop()
+    }
 
     @Test
     fun `정상 흐름이 Idle에서 시작해서 Idle로 돌아온다`() = runTest {
@@ -75,6 +126,40 @@ class GuideStateMachineTest {
             ),
             log.map { "${it.prevState}->${it.nextState}" },
         )
+        machine.stop()
+    }
+
+    @Test
+    fun `두 목적지를 연이어 안내하고 복귀를 선택한 뒤에만 홈베이스로 간다`() = runTest {
+        val first = dest.copy(route = listOf(RouteStep("entrance", "")))
+        val second = dest.copy(id = "restroom", route = listOf(RouteStep("restroom", "")))
+        val robot = FakeRobotController(scope = this)
+        val moves = mutableListOf<String>()
+        robot.addListener(object : RobotListener {
+            override fun onGoToStatusChanged(location: String, status: GoToStatus, description: String) {
+                if (status == GoToStatus.START) moves += location
+            }
+        })
+        val machine = GuideStateMachine(robot = robot, scope = this)
+        machine.start()
+        machine.onEvent(GuideEvent.StartRequested)
+        machine.onEvent(GuideEvent.DestinationSelected(first))
+        machine.onEvent(GuideEvent.UserConfirmed)
+        advanceUntilIdle()
+        assertEquals(GuideState.Arrived(first), machine.state.value)
+
+        machine.onEvent(GuideEvent.DestinationSelected(second))
+        advanceUntilIdle()
+        assertEquals(listOf("entrance"), moves)
+        machine.onEvent(GuideEvent.UserConfirmed)
+        advanceUntilIdle()
+        assertEquals(GuideState.Arrived(second), machine.state.value)
+        assertEquals(listOf("entrance", "restroom"), moves)
+
+        machine.onEvent(GuideEvent.ArrivalConfirmed)
+        advanceUntilIdle()
+        assertEquals(GuideState.Idle, machine.state.value)
+        assertEquals(listOf("entrance", "restroom", "home base"), moves)
         machine.stop()
     }
 

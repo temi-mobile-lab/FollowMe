@@ -28,11 +28,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val state by viewModel.state.collectAsStateWithLifecycle()
+            val needsVoiceSetup by viewModel.voiceSetupRequired.collectAsStateWithLifecycle()
 
+            val departureMessage by viewModel.departureMessage.collectAsStateWithLifecycle()
             FollowMeApp(
+                departureMessage = departureMessage,
                 state = state,
                 destinations = viewModel.catalog.destinations,
                 onEvent = viewModel::onEvent,
+                onVoiceSetup = if (needsVoiceSetup) viewModel::requestVoiceSetup else null,
                 // 실제 temi 배포 빌드(USE_REAL_ROBOT=true)에서는 디버그 입력창을 아예 숨긴다.
                 onSimulateVoice = if (!BuildConfig.USE_REAL_ROBOT) viewModel::simulateVoiceInput else null,
             )
@@ -52,7 +56,10 @@ class MainActivity : ComponentActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         // 키보드가 올라왔다 내려가면 시스템 바가 다시 나타나므로 포커스를 받을 때마다 숨긴다.
-        if (hasFocus) enterImmersiveMode()
+        if (hasFocus) {
+            enterImmersiveMode()
+            viewModel.refreshVoiceSetup()
+        }
     }
 
     private fun enterImmersiveMode() {

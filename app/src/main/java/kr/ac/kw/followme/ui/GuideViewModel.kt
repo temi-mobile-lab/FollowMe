@@ -4,6 +4,8 @@ import android.app.Application
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kr.ac.kw.followme.BuildConfig
 import kr.ac.kw.followme.data.CsvGuideLogger
 import kr.ac.kw.followme.data.DestinationCatalog
@@ -11,12 +13,14 @@ import kr.ac.kw.followme.data.DestinationRepository
 import kr.ac.kw.followme.gemini.GeminiClient
 import kr.ac.kw.followme.gemini.GeminiDestinationInterpreter
 import kr.ac.kw.followme.guide.GuideEvent
+import kr.ac.kw.followme.guide.GuideState
 import kr.ac.kw.followme.guide.GuideStateMachine
 import kr.ac.kw.followme.robot.FakeRobotController
 import kr.ac.kw.followme.robot.RobotController
 import kr.ac.kw.followme.robot.RobotListener
 import kr.ac.kw.followme.robot.TemiRobotController
 import kr.ac.kw.followme.voice.VoiceController
+import kr.ac.kw.followme.voice.KoreanGuideInterpreter
 
 /**
  * 3~8단계 공용 ViewModel. 로봇(터치 상태 머신)과 음성(Gemini) 두 입력 채널을 여기서 묶는다.
@@ -49,33 +53,62 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
 
     val state = machine.state
 
-    // GEMINI_API_KEY 가 비어 있으면(local.properties 에 키를 안 넣었으면) 음성 기능 자체를
-    // 꺼 둔다 — 키 없이 Gemini 를 호출하면 매번 401 로 실패하기만 하므로, 아예 안 켜는 게 낫다.
-    private val voiceController: VoiceController? = if (BuildConfig.GEMINI_API_KEY.isNotBlank()) {
-        VoiceController(
-            robot = robot,
-            interpreter = GeminiDestinationInterpreter(GeminiClient(BuildConfig.GEMINI_API_KEY)),
-            catalog = catalog,
-            stateFlow = state,
-            onEvent = ::onEvent,
-            scope = viewModelScope,
-        )
-    } else {
-        Log.w(TAG, "GEMINI_API_KEY 가 없어 음성 안내를 켜지 않습니다. local.properties 를 확인하세요.")
-        null
-    }
+    private val voiceController = VoiceController(
+        robot = robot,
+        interpreter = KoreanGuideInterpreter(
+            BuildConfig.GEMINI_API_KEY.takeIf { it.isNotBlank() }?.let { GeminiDestinationInterpreter(GeminiClient(it)) }
+        ),
+        catalog = catalog,
+        stateFlow = state,
+        onEvent = ::onEvent,
+        scope = viewModelScope,
+    )
+    private val needsVoiceSetup = MutableStateFlow(false)
+    val voiceSetupRequired = needsVoiceSetup.asStateFlow()
 
     init {
         // 위치 목록은 로봇과 실제로 연결된 뒤에야 의미가 있다(TemiRobotController 는 연결 전엔
         // 빈 목록을 돌려준다). onRobotReady 콜백에서 한 번 확인한다.
         robot.addListener(object : RobotListener {
             override fun onRobotReady(isReady: Boolean) {
+                refreshVoiceSetup()
                 if (isReady) checkMissingLocations()
             }
         })
     }
 
-    fun onEvent(event: GuideEvent) = machine.onEvent(event)
+    private val departureProblem = MutableStateFlow<String?>(null)
+    val departureMessage = departureProblem.asStateFlow()
+
+    fun onEvent(event: GuideEvent) {
+        val confirming = state.value as? GuideState.Confirming
+        if (event == GuideEvent.UserConfirmed && confirming != null && robot is TemiRobotController) {
+            val problem = checkDeparture(confirming)
+            if (problem != null) {
+                departureProblem.value = problem
+                if (robot.isReady()) robot.speak(problem)
+                return
+            }
+        }
+        departureProblem.value = null
+        machine.onEvent(event)
+    }
+
+    private fun checkDeparture(state: GuideState.Confirming): String? {
+        if (!robot.isReady()) return "테미에 연결 중입니다. 잠시 후 다시 시도해 주세요."
+        val saved = robot.getLocations().map { it.trim().lowercase() }.toSet()
+        val missing = state.dest.locations.firstOrNull { it.trim().lowercase() !in saved } ?: return null
+        return "테미 지도에 ‘${missing}’ 위치를 먼저 저장해 주세요."
+    }
+
+    fun refreshVoiceSetup() {
+        needsVoiceSetup.value = robot.isReady() && !robot.isVoiceAvailable()
+        voiceController.refreshListening()
+    }
+
+    fun requestVoiceSetup() {
+        (robot as? TemiRobotController)?.requestVoiceSetup()
+    }
 
     /**
      * 에뮬레이터/개발 중 마이크 없이 음성 입력을 흉내 낼 때 쓴다. 실제 temi 에서는 쓸 일이
@@ -92,12 +125,12 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
     fun onStart() {
         robot.start()
         machine.start()
-        voiceController?.start()
+        voiceController.start()
     }
 
     /** MainActivity.onStop 에서 호출. (등록의 역순으로 해제) */
     fun onStop() {
-        voiceController?.stop()
+        voiceController.stop()
         machine.stop()
         robot.stop()
     }

@@ -66,11 +66,11 @@ class GuideStateMachine(
             )
         )
         _state.value = next
-        onEnter(next)
+        onEnter(next, event)
     }
 
     /** 상태에 들어갈 때만 실행되는 side effect. 여기 말고는 goTo/speak 를 부르지 않는다. */
-    private fun onEnter(state: GuideState) {
+    private fun onEnter(state: GuideState, event: GuideEvent) {
         timeoutJob?.cancel()
         when (state) {
             is GuideState.Idle -> Unit
@@ -78,7 +78,10 @@ class GuideStateMachine(
             is GuideState.Selecting -> scheduleTimeout(selectTimeoutMillis)
 
             is GuideState.Confirming ->
-                robot.speak("선택한 목적지로 안내합니다. 따라오세요.")
+                robot.speak(with(state.dest) {
+                    if (viaElevator) "${displayName}는 ${floor}층에 있습니다. ${finalLocation}까지 안내할까요?"
+                    else "${displayName}까지 안내할까요?"
+                })
 
             is GuideState.Navigating -> {
                 val step = state.dest.route.getOrNull(state.seg)
@@ -87,6 +90,9 @@ class GuideStateMachine(
                     // 기존 Recovering/Error 경로를 그대로 타게 한다 (별도 처리 분기를 늘리지 않음).
                     dispatch(GuideEvent.GoToAbort("구간 인덱스(${state.seg}) 범위 초과"))
                 } else {
+                    if (event == GuideEvent.UserConfirmed) {
+                        robot.speak("안내를 시작합니다. 저를 따라오세요.")
+                    }
                     robot.goTo(step.location)
                 }
             }
@@ -133,6 +139,12 @@ class GuideStateMachine(
     // --- RobotListener: 로봇 콜백을 GuideEvent 로 변환해 dispatch 로 넘긴다 -----------
 
     override fun onGoToStatusChanged(location: String, status: GoToStatus, description: String) {
+        val expected = when (val current = state.value) {
+            is GuideState.Navigating -> current.dest.route.getOrNull(current.seg)?.location
+            GuideState.Returning -> homeBase
+            else -> null
+        } ?: return
+        if (!location.trim().equals(expected.trim(), ignoreCase = true)) return
         when (status) {
             GoToStatus.COMPLETE -> dispatch(GuideEvent.GoToComplete)
             GoToStatus.ABORT -> dispatch(GuideEvent.GoToAbort(description))

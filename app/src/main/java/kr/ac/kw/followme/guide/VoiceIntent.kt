@@ -3,7 +3,7 @@ package kr.ac.kw.followme.guide
 import kr.ac.kw.followme.data.DestinationCatalog
 
 /**
- * 음성으로 들어온 말 한 마디를 해석한 결과. Gemini 가 돌려준 JSON 을 이 타입으로 바꾼다.
+ * 음성으로 들어온 말 한 마디를 해석한 결과.
  * [kr.ac.kw.followme.voice.VoiceController] 가 이 결과를 보고 적절한 [GuideEvent] 로 바꿔
  * `onEvent()` 에 넣는다 — 즉, 음성은 터치와 똑같은 입구(GuideEvent)로 들어오는 또 하나의
  * 입력 채널일 뿐이고, GuideStateMachine/GuideTransitions 는 음성에 대해 아무것도 모른다.

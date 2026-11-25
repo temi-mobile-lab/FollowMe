@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kr.ac.kw.followme.ui.components.PrimaryButton
+import kr.ac.kw.followme.ui.components.SecondaryButton
 import kr.ac.kw.followme.ui.theme.Blue50
 import kr.ac.kw.followme.ui.theme.Blue700
 import kr.ac.kw.followme.ui.theme.FollowMeTheme
@@ -47,6 +48,7 @@ import kr.ac.kw.followme.ui.theme.FollowMeTheme
 fun IdleScreen(
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
+    onVoiceSetup: (() -> Unit)? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
 
@@ -105,7 +107,8 @@ fun IdleScreen(
             )
 
             Text(
-                text = "목적지를 고르면 제가 앞장서서 함께 가 드릴게요.",
+                text = if (onVoiceSetup == null) "“엘리베이터로 안내해 줘”라고 말씀해 보세요."
+                    else "음성 안내를 사용하려면 테미의 키오스크 앱으로 Follow Me를 선택해 주세요.",
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -118,6 +121,13 @@ fun IdleScreen(
                 onClick = onStart,
                 modifier = Modifier.padding(top = 44.dp),
             )
+            if (onVoiceSetup != null) {
+                SecondaryButton(
+                    text = "음성 안내 설정",
+                    onClick = onVoiceSetup,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
 
             Text(
                 text = "화면을 아무 곳이나 눌러도 시작됩니다",

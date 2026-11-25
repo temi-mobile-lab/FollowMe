@@ -21,6 +21,9 @@
         <meta-data
             android:name="com.robotemi.sdk.metadata.SKILL"
             android:value="@string/app_name" />
+        <meta-data android:name="@string/metadata_kiosk" android:value="true" />
+        <meta-data android:name="@string/metadata_override_nlu" android:value="true" />
+        <meta-data android:name="@string/metadata_override_conversation_layer" android:value="true" />
 
         <activity
             android:name=".MainActivity"

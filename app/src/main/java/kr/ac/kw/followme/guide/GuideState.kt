@@ -18,7 +18,7 @@ sealed interface GuideState {
     data object Selecting : GuideState
 
     /** 선택한 목적지 확인 중. */
-    data class Confirming(val dest: Destination) : GuideState
+    data class Confirming(val dest: Destination, val arrivedFrom: Arrived? = null) : GuideState
 
     /**
      * route[seg] 로 이동 중.

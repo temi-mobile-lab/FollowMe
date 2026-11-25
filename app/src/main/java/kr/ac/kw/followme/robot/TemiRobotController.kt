@@ -6,12 +6,15 @@ import android.content.pm.PackageManager
 import android.util.Log
 import com.robotemi.sdk.Robot
 import com.robotemi.sdk.SttLanguage
+import com.robotemi.sdk.SttRequest
 import com.robotemi.sdk.TtsRequest
 import com.robotemi.sdk.listeners.OnDetectionStateChangedListener
+import com.robotemi.sdk.listeners.OnConversationStatusChangedListener
 import com.robotemi.sdk.listeners.OnGoToLocationStatusChangedListener
 import com.robotemi.sdk.listeners.OnRobotReadyListener
 import com.robotemi.sdk.navigation.model.SpeedLevel
 import com.robotemi.sdk.voice.WakeupRequest
+import java.util.UUID
 
 /**
  * 실제 temi 로봇을 감싸는 [RobotController] 구현.
@@ -30,8 +33,7 @@ import com.robotemi.sdk.voice.WakeupRequest
  * ⚠️ 실기기에서 확인된 것: temi 의 위치 저장 화면이 입력한 이름의 대소문자를 바꿔 저장하는
  * 경우가 있었다(예: "bima_101"로 입력했는데 목록엔 "BIMA_101"로 보임). destinations.json
  * 을 수정할 때마다 실기기에 저장된 철자와 맞추는 건 번거롭고 실수하기 쉬워서, [goTo] 에서
- * 대소문자를 구분하지 않고 찾아 temi 에 실제로 저장된 원문으로 보정해서 보낸다 — 아래
- * [locationNameMap] 참고.
+ * 대소문자를 구분하지 않고 찾아 temi 에 실제로 저장된 원문으로 보정해서 보낸다.
  *
  * @param context Application context 를 받는다(Activity 가 아니어도 된다).
  */
@@ -40,23 +42,22 @@ class TemiRobotController(private val context: Context) :
     OnRobotReadyListener,
     Robot.TtsListener,
     Robot.AsrListener,
+    OnConversationStatusChangedListener,
     OnGoToLocationStatusChangedListener,
     OnDetectionStateChangedListener {
 
     private val robot: Robot = Robot.getInstance()
     private val listeners = mutableSetOf<RobotListener>()
+    private var currentSpeechId: UUID? = null
 
     @Volatile
     private var ready = false
-
-    /** 소문자로 정규화한 이름 -> temi 에 실제로 저장된 원문. [goTo] 의 대소문자 보정에 쓴다. */
-    @Volatile
-    private var locationNameMap: Map<String, String> = emptyMap()
 
     override fun start() {
         robot.addOnRobotReadyListener(this)
         robot.addTtsListener(this)
         robot.addAsrListener(this)
+        robot.addOnConversationStatusChangedListener(this)
         robot.addOnGoToLocationStatusChangedListener(this)
         robot.addOnDetectionStateChangedListener(this)
     }
@@ -65,8 +66,11 @@ class TemiRobotController(private val context: Context) :
         robot.removeOnRobotReadyListener(this)
         robot.removeTtsListener(this)
         robot.removeAsrListener(this)
+        robot.removeOnConversationStatusChangedListener(this)
         robot.removeOnGoToLocationStatusChangedListener(this)
         robot.removeOnDetectionStateChangedListener(this)
+        ready = false
+        currentSpeechId = null
     }
 
     override fun addListener(listener: RobotListener) {
@@ -80,9 +84,9 @@ class TemiRobotController(private val context: Context) :
     override fun goTo(location: String, speed: GoToSpeed) {
         // destinations.json 에 적은 대소문자와 temi 에 실제 저장된 대소문자가 달라도
         // goTo 가 실패하지 않도록, 찾은 게 있으면 그 원문으로 바꿔 보낸다.
-        // "home base" 처럼 locationNameMap 에 없는 이름(= temi 가 getLocations() 에
+        // "home base" 처럼 위치 목록에 없는 이름(= temi 가 getLocations() 에
         // 포함하지 않는 예약어)은 입력받은 그대로 보낸다.
-        val resolved = locationNameMap[location.trim().lowercase()] ?: location
+        val resolved = getLocations().firstOrNull { it.trim().equals(location.trim(), ignoreCase = true) } ?: location
         if (resolved != location) {
             Log.i(TAG, "위치 이름 대소문자 보정: \"$location\" -> \"$resolved\"")
         }
@@ -94,16 +98,30 @@ class TemiRobotController(private val context: Context) :
     }
 
     override fun speak(text: String) {
-        // 로봇/시스템 설정 언어와 상관없이 항상 한국어로 말한다 — 이 앱은 한국어 전용이다.
-        robot.speak(TtsRequest.create(text, true, TtsRequest.Language.KO_KR))
+        val request = TtsRequest.create(
+            speech = text,
+            isShowOnConversationLayer = false,
+            language = TtsRequest.Language.KO_KR,
+        )
+        currentSpeechId = request.id
+        // SDK에 발화를 맡기기 전에 듣기를 닫아 안내 멘트와 음성 인식이 겹치지 않게 한다.
+        listeners.toList().forEach { it.onTtsStatusChanged(TtsStatus.STARTED) }
+        robot.speak(request)
     }
 
     override fun getLocations(): List<String> = robot.locations
 
     override fun isReady(): Boolean = ready
 
+    override fun isVoiceAvailable(): Boolean = ready && robot.isSelectedKioskApp()
+
+    fun requestVoiceSetup() = robot.requestToBeKioskApp()
+
     override fun startListening() {
-        robot.wakeup(listOf(SttLanguage.KO_KR), WakeupRequest(wakeupResponse = false, newSession = false))
+        robot.wakeup(
+            SttRequest(languages = listOf(SttLanguage.KO_KR), timeout = 12),
+            WakeupRequest(wakeupResponse = false),
+        )
     }
 
     override fun stopListening() {
@@ -116,14 +134,8 @@ class TemiRobotController(private val context: Context) :
         ready = isReady
         if (isReady) {
             registerTopBarEntry()
-            refreshLocationNameMap()
         }
         listeners.toList().forEach { it.onRobotReady(isReady) }
-    }
-
-    /** temi 에 저장된 위치 이름을 다시 읽어 대소문자 보정용 맵을 갱신한다. */
-    private fun refreshLocationNameMap() {
-        locationNameMap = robot.locations.associateBy { it.trim().lowercase() }
     }
 
     /** 앱을 temi 상단바(Skill 목록)에 등록한다. 로봇과 연결된 뒤 한 번 해 주면 된다. */
@@ -159,6 +171,7 @@ class TemiRobotController(private val context: Context) :
     }
 
     override fun onTtsStatusChanged(ttsRequest: TtsRequest) {
+        if (ttsRequest.id != currentSpeechId) return
         val mapped = when (ttsRequest.status) {
             TtsRequest.Status.STARTED -> TtsStatus.STARTED
             TtsRequest.Status.COMPLETED -> TtsStatus.COMPLETED
@@ -167,11 +180,23 @@ class TemiRobotController(private val context: Context) :
             // PENDING/PROCESSING 은 중간 단계라 상태 머신이 신경 쓸 필요가 없어 무시한다.
             TtsRequest.Status.PENDING, TtsRequest.Status.PROCESSING -> return
         }
+        if (mapped != TtsStatus.STARTED) currentSpeechId = null
+        Log.d(TAG, "TTS: $mapped")
         listeners.toList().forEach { it.onTtsStatusChanged(mapped) }
     }
 
     override fun onAsrResult(asrResult: String, sttLanguage: SttLanguage) {
+        Log.d(TAG, "ASR result: language=$sttLanguage, length=${asrResult.length}")
         listeners.toList().forEach { it.onSpeechRecognized(asrResult) }
+    }
+
+    override fun onConversationStatusChanged(status: Int, text: String) {
+        if (status == OnConversationStatusChangedListener.LISTENING && text.isEmpty()) {
+            Log.d(TAG, "ASR listening")
+        }
+        if (status == OnConversationStatusChangedListener.IDLE) {
+            listeners.toList().forEach { it.onListeningEnded() }
+        }
     }
 
     override fun onDetectionStateChanged(state: Int) {

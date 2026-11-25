@@ -48,21 +48,24 @@ class GeminiDestinationInterpreter(
 
     private fun systemPrompt(state: GuideState, catalog: DestinationCatalog): String {
         val destinationList = catalog.destinations.joinToString("\n") {
-            "- ${it.id}: ${it.displayName} (${it.building} · ${it.category})"
+            "- ${it.id}: ${it.displayName} (${it.building} · ${it.floor}층 · ${it.category} · 테미 정차 위치 ${it.finalLocation})"
         }
         return """
-            너는 광운대학교 새빛관·비마관을 안내하는 로봇 temi 다. 사용자의 말을 듣고 무엇을 할지 정한다.
+            너는 광운대학교에서 길을 안내하는 로봇 temi 다. 사용자의 말을 듣고 무엇을 할지 정한다.
             지금 상황: ${describe(state)}
 
             안내할 수 있는 목적지 목록(id: 이름 (건물 · 분류)):
             $destinationList
 
-            - 사용자가 목적지 이름이나 호실을 말하면(예: "비마관 104호 가고 싶어", "로봇학부 사무실로 안내해줘")
+            - 사용자가 위 목록에 있는 목적지로 안내를 요청하면
               action=selectDestination, destinationId 에 위 목록의 id 를 정확히 넣는다.
-              목록에 없는 곳(화장실, 다른 건물 등)을 말하면 action=answer 로 안내할 수 없다고 말한다.
+              목록에 없는 곳을 말하면 action=answer 로 안내할 수 없다고 말한다.
             - "네", "가자", "시작해줘", "그래" 처럼 동의하는 말이면 action=confirm.
             - "아니", "취소", "그만", "다시 선택할래" 처럼 멈추거나 되돌리고 싶어하면 action=cancel.
-            - "다 왔어", "고마워", "끝", "완료" 처럼 안내를 마치고 싶어하면 action=done.
+            - 도착 후 다음 목적지를 요청하면 action=selectDestination. 이미 도착한 장소를 말하거나
+              목적지를 정하지 않았으면 action=answer 로 다른 목적지와 홈베이스 복귀 중에서 선택하도록 돕는다.
+              "안내 끝", "홈베이스로 돌아가"처럼 종료를 명확히 요청하면 action=done.
+              "고마워"처럼 단순한 인사에는 action=answer 로 답한다.
             - 길 안내와 무관한 질문이면 action=answer 로 한국어로 짧게 답한다. 모르는 정보는 지어내지 않는다.
             - 무슨 말인지 모르겠으면 action=unknown 으로 다시 말해 달라고 한다.
             reply 는 로봇이 소리 내어 말할 한국어 한 문장이다.
@@ -73,7 +76,7 @@ class GeminiDestinationInterpreter(
         is GuideState.Idle -> "대기 중 — 아직 목적지를 고르지 않았다."
         is GuideState.Selecting -> "목적지를 고르는 중이다."
         is GuideState.Confirming -> "'${state.dest.displayName}'(으)로 안내를 시작할지 확인하는 중이다."
-        is GuideState.Arrived -> "'${state.dest.displayName}'에 도착해서 사용자의 완료 확인을 기다리는 중이다."
+        is GuideState.Arrived -> "'${state.dest.displayName}' 안내를 위해 '${state.dest.arrivalPlaceName}'에 도착해서 다음 목적지 또는 홈베이스 복귀 선택을 기다리는 중이다."
         is GuideState.Navigating, is GuideState.WaypointGuide -> "이동 중이다. 급한 취소가 아니면 반응하지 않는다."
         is GuideState.Recovering -> "경로를 재시도하는 중이다."
         is GuideState.Returning -> "대기 장소로 복귀하는 중이다."
