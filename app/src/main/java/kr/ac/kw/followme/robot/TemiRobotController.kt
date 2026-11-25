@@ -27,6 +27,12 @@ import com.robotemi.sdk.voice.WakeupRequest
  *    짜여 있지만, 실제 타이밍은 로봇에서 튜닝이 필요할 수 있다.
  *  - onRobotReady 가 호출되는 시점(앱 포그라운드 복귀 때마다인지, 최초 1회인지).
  *
+ * ⚠️ 실기기에서 확인된 것: temi 의 위치 저장 화면이 입력한 이름의 대소문자를 바꿔 저장하는
+ * 경우가 있었다(예: "bima_101"로 입력했는데 목록엔 "BIMA_101"로 보임). destinations.json
+ * 을 수정할 때마다 실기기에 저장된 철자와 맞추는 건 번거롭고 실수하기 쉬워서, [goTo] 에서
+ * 대소문자를 구분하지 않고 찾아 temi 에 실제로 저장된 원문으로 보정해서 보낸다 — 아래
+ * [locationNameMap] 참고.
+ *
  * @param context Application context 를 받는다(Activity 가 아니어도 된다).
  */
 class TemiRobotController(private val context: Context) :
@@ -42,6 +48,10 @@ class TemiRobotController(private val context: Context) :
 
     @Volatile
     private var ready = false
+
+    /** 소문자로 정규화한 이름 -> temi 에 실제로 저장된 원문. [goTo] 의 대소문자 보정에 쓴다. */
+    @Volatile
+    private var locationNameMap: Map<String, String> = emptyMap()
 
     override fun start() {
         robot.addOnRobotReadyListener(this)
@@ -68,7 +78,15 @@ class TemiRobotController(private val context: Context) :
     }
 
     override fun goTo(location: String, speed: GoToSpeed) {
-        robot.goTo(location = location, speedLevel = speed.toSpeedLevel())
+        // destinations.json 에 적은 대소문자와 temi 에 실제 저장된 대소문자가 달라도
+        // goTo 가 실패하지 않도록, 찾은 게 있으면 그 원문으로 바꿔 보낸다.
+        // "home base" 처럼 locationNameMap 에 없는 이름(= temi 가 getLocations() 에
+        // 포함하지 않는 예약어)은 입력받은 그대로 보낸다.
+        val resolved = locationNameMap[location.trim().lowercase()] ?: location
+        if (resolved != location) {
+            Log.i(TAG, "위치 이름 대소문자 보정: \"$location\" -> \"$resolved\"")
+        }
+        robot.goTo(location = resolved, speedLevel = speed.toSpeedLevel())
     }
 
     override fun stopMovement() {
@@ -96,8 +114,16 @@ class TemiRobotController(private val context: Context) :
 
     override fun onRobotReady(isReady: Boolean) {
         ready = isReady
-        if (isReady) registerTopBarEntry()
+        if (isReady) {
+            registerTopBarEntry()
+            refreshLocationNameMap()
+        }
         listeners.toList().forEach { it.onRobotReady(isReady) }
+    }
+
+    /** temi 에 저장된 위치 이름을 다시 읽어 대소문자 보정용 맵을 갱신한다. */
+    private fun refreshLocationNameMap() {
+        locationNameMap = robot.locations.associateBy { it.trim().lowercase() }
     }
 
     /** 앱을 temi 상단바(Skill 목록)에 등록한다. 로봇과 연결된 뒤 한 번 해 주면 된다. */

@@ -103,7 +103,10 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun checkMissingLocations() {
-        val missing = catalog.missingLocations(robot.getLocations())
+        val saved = robot.getLocations()
+        // 대소문자/오타 문제를 눈으로 바로 확인할 수 있게 temi 가 실제로 돌려준 원문을 그대로 남긴다.
+        Log.i(TAG, "temi 에 저장된 위치 (원문): $saved")
+        val missing = catalog.missingLocations(saved)
         if (missing.isNotEmpty()) {
             Log.w(TAG, "temi 에 없는 위치 이름: $missing")
         }

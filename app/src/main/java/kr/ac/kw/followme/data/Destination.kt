@@ -41,12 +41,19 @@ data class DestinationCatalog(
 
     fun byId(id: String): Destination? = destinations.firstOrNull { it.id == id }
 
-    /** 앱 시작 시 temi 의 getLocations() 결과와 대조해 누락된 위치를 찾는다. */
+    /**
+     * 앱 시작 시 temi 의 getLocations() 결과와 대조해 누락된 위치를 찾는다.
+     *
+     * homeBase("home base")는 일부러 이 검사에서 뺐다 — 실기기에서 확인해 보니 temi 의
+     * getLocations() 는 "home base" 를 목록에 포함하지 않는다(충전독 전용 예약어라 일반
+     * 저장 위치 목록과 별도로 관리되는 것으로 보인다). 그런데도 goTo("home base") 는 실제로
+     * 정상 동작한다(CSV 로그로 확인함) — 그래서 여기서 매번 "없다"고 뜨는 건 실제 문제가
+     * 아니라 이 검사 자체의 거짓 양성(false positive)이었다.
+     */
     fun missingLocations(savedLocations: Collection<String>): List<String> {
         val saved = savedLocations.map { it.trim().lowercase() }.toSet()
         return destinations
             .flatMap { it.locations }
-            .plus(homeBase)
             .distinct()
             .filter { it.trim().lowercase() !in saved }
     }
