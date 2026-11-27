@@ -66,7 +66,7 @@ class VoiceControllerTest {
         assertEquals(GuideState.Confirming(entrance, GuideState.Arrived(elevator)), machine.state.value)
         machine.onEvent(GuideEvent.UserConfirmed) // 같은 확인 화면의 안내 시작 버튼
         advanceTimeBy(1_100)
-        robot.simulateSpeech("홈베이스로 돌아가")
+        robot.simulateSpeech("출입문으로 돌아가")
         runCurrent()
         assertEquals(GuideState.Returning, machine.state.value)
         voice.stop()

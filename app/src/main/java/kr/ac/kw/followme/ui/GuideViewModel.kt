@@ -52,6 +52,11 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
     )
 
     val state = machine.state
+    val adminMode = machine.adminMode
+    val battery = machine.battery
+
+    fun startBatteryMonitoring(simulateLow: Boolean) = machine.startBatteryMonitoring(simulateLow)
+    fun exitAdminMode() = machine.exitAdminMode()
 
     private val voiceController = VoiceController(
         robot = robot,
@@ -123,9 +128,9 @@ class GuideViewModel(application: Application) : AndroidViewModel(application) {
 
     /** MainActivity.onStart 에서 호출. */
     fun onStart() {
-        robot.start()
         machine.start()
         voiceController.start()
+        robot.start()
     }
 
     /** MainActivity.onStop 에서 호출. (등록의 역순으로 해제) */

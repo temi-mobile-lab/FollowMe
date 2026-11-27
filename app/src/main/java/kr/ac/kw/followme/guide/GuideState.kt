@@ -40,8 +40,11 @@ sealed interface GuideState {
     /** goTo abort 후 재시도 준비. retry 는 현재까지의 재시도 횟수. */
     data class Recovering(val dest: Destination, val seg: Int, val retry: Int) : GuideState
 
-    /** home base 로 복귀 중. */
+    /** 새빛관 출입문으로 복귀 중. */
     data object Returning : GuideState
+
+    data object Docking : GuideState
+    data object Charging : GuideState
 
     /** 복구 불가. 사용자에게 사과하고 처음으로 돌아간다. */
     data class Error(val reason: String) : GuideState
@@ -60,6 +63,8 @@ sealed interface GuideState {
             is Arrived -> "Arrived"
             is Recovering -> "Recovering"
             is Returning -> "Returning"
+            Docking -> "Docking"
+            Charging -> "Charging"
             is Error -> "Error"
             is WaitingUser -> "WaitingUser"
         }

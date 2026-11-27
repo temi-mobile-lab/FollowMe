@@ -9,6 +9,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -54,6 +62,10 @@ fun FollowMeApp(
     onSimulateVoice: ((String) -> Unit)? = null,
     onVoiceSetup: (() -> Unit)? = null,
     departureMessage: String? = null,
+    adminMode: Boolean = false,
+    batteryPercent: Int? = null,
+    onBatteryMode: (Boolean) -> Unit,
+    onExitAdmin: () -> Unit,
 ) {
     FollowMeTheme {
         Surface(modifier = modifier.fillMaxSize()) {
@@ -121,6 +133,15 @@ fun FollowMeApp(
                             )
 
                         is GuideState.Returning -> ReturningScreen()
+                        GuideState.Docking -> ReturningScreen(
+                            title = "홈베이스로 이동 중입니다",
+                            subtitle = "배터리 충전을 위해 복귀합니다.",
+                        )
+                        GuideState.Charging -> ReturningScreen(
+                            title = "홈베이스에서 충전 대기 중입니다",
+                            subtitle = (batteryPercent?.let { "현재 ${it}%. " } ?: "") +
+                                "100%가 되면 새빛관 출입문으로 돌아갑니다.",
+                        )
 
                         is GuideState.Error ->
                             ErrorScreen(
@@ -136,8 +157,64 @@ fun FollowMeApp(
                         modifier = Modifier.align(Alignment.BottomCenter),
                     )
                 }
+                val canStartBatteryMode = state == GuideState.Idle || state is GuideState.Error
+                if (canStartBatteryMode || adminMode) {
+                    BatteryAdminMenu(
+                        modifier = Modifier.align(Alignment.TopEnd).padding(top = 72.dp, end = 8.dp),
+                        adminMode = adminMode,
+                        batteryPercent = batteryPercent,
+                        canStartTest = canStartBatteryMode,
+                        onBatteryMode = onBatteryMode,
+                        onExitAdmin = onExitAdmin,
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun BatteryAdminMenu(
+    adminMode: Boolean,
+    batteryPercent: Int?,
+    canStartTest: Boolean,
+    onBatteryMode: (Boolean) -> Unit,
+    onExitAdmin: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    if (adminMode) {
+        TextButton(onClick = { open = true }, modifier = modifier) { Text("관리자 모드") }
+    } else {
+        IconButton(onClick = { open = true }, modifier = modifier) {
+            Icon(Icons.Rounded.MoreHoriz, contentDescription = "관리자 메뉴", modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (open) {
+        AlertDialog(
+            onDismissRequest = { open = false },
+            title = { Text("관리자 · 배터리") },
+            text = {
+                Column {
+                    Text(batteryPercent?.let { "테미 본체 배터리 ${it}%" } ?: "본체 배터리 확인 중")
+                    Text("배터리 감시 중에는 80% 이하에서 홈베이스로 이동합니다.")
+                    if (canStartTest) {
+                        Text("복귀 시험을 누르면 현재 잔량과 관계없이 80% 이하로 가정하고 실제로 이동합니다.")
+                        if (!adminMode) {
+                            TextButton(onClick = { open = false; onBatteryMode(false) }) { Text("배터리 감시 시작") }
+                        }
+                        TextButton(onClick = { open = false; onBatteryMode(true) }) { Text("80% 이하 복귀 시험") }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { open = false }) { Text("닫기") } },
+            dismissButton = {
+                if (adminMode) {
+                    TextButton(onClick = { open = false; onExitAdmin() }) { Text("관리자 모드 종료") }
+                }
+            },
+        )
     }
 }
 

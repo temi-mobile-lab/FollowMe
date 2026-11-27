@@ -28,9 +28,9 @@ interface RobotController {
 
     /**
      * 저장된 위치로 이동을 시작한다. 결과는 [RobotListener.onGoToStatusChanged] 로 온다.
-     * @param speed temi SpeedLevel. 동행 안내는 기본적으로 저속(SLOW)을 쓴다.
+     * @param speed temi SpeedLevel. 동행 안내와 홈베이스 복귀의 기본 속도는 중속(MEDIUM)이다.
      */
-    fun goTo(location: String, speed: GoToSpeed = GoToSpeed.SLOW)
+    fun goTo(location: String, speed: GoToSpeed = GoToSpeed.MEDIUM)
 
     /** 진행 중인 이동을 멈춘다. */
     fun stopMovement()
@@ -43,6 +43,8 @@ interface RobotController {
 
     /** 로봇(SDK)이 명령을 받을 준비가 됐는지. OnRobotReadyListener 대응. */
     fun isReady(): Boolean
+
+    fun getBattery(): RobotBattery?
 
     /** 한국어 인식 결과를 이 앱에서 받을 수 있는지. */
     fun isVoiceAvailable(): Boolean = isReady()
@@ -60,6 +62,8 @@ interface RobotController {
 
 /** temi SDK 의 SpeedLevel 과 1:1 대응 (navigation.model.SpeedLevel). */
 enum class GoToSpeed { VERY_SLOW, SLOW, MEDIUM, HIGH, VERY_HIGH }
+
+data class RobotBattery(val percent: Int, val isCharging: Boolean)
 
 /** OnGoToLocationStatusChangedListener 의 status 문자열과 대응. */
 enum class GoToStatus { START, CALCULATING, GOING, COMPLETE, ABORT, REPOSING }
@@ -81,6 +85,7 @@ interface RobotListener {
     fun onGoToStatusChanged(location: String, status: GoToStatus, description: String = "") {}
     fun onTtsStatusChanged(status: TtsStatus) {}
     fun onRobotReady(isReady: Boolean) {}
+    fun onBatteryChanged(battery: RobotBattery?) {}
 
     /** 음성 인식 결과(사람이 한 말 전체 문장). */
     fun onSpeechRecognized(text: String) {}

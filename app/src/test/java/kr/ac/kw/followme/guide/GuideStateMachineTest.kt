@@ -113,7 +113,7 @@ class GuideStateMachineTest {
         machine.onEvent(GuideEvent.ArrivalConfirmed)
         assertEquals(GuideState.Returning, machine.state.value)
 
-        // Returning: speak + goTo(home base) 완료 -> Idle
+        // 출입문 복귀 완료 -> Idle
         advanceUntilIdle()
         assertEquals(GuideState.Idle, machine.state.value)
 
@@ -130,7 +130,7 @@ class GuideStateMachineTest {
     }
 
     @Test
-    fun `두 목적지를 연이어 안내하고 복귀를 선택한 뒤에만 홈베이스로 간다`() = runTest {
+    fun `두 목적지를 연이어 안내하고 복귀를 선택하면 대기 장소로 간다`() = runTest {
         val first = dest.copy(route = listOf(RouteStep("entrance", "")))
         val second = dest.copy(id = "restroom", route = listOf(RouteStep("restroom", "")))
         val robot = FakeRobotController(scope = this)
@@ -159,7 +159,7 @@ class GuideStateMachineTest {
         machine.onEvent(GuideEvent.ArrivalConfirmed)
         advanceUntilIdle()
         assertEquals(GuideState.Idle, machine.state.value)
-        assertEquals(listOf("entrance", "restroom", "home base"), moves)
+        assertEquals(listOf("entrance", "restroom", "새빛관 출입문"), moves)
         machine.stop()
     }
 

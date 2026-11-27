@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kr.ac.kw.followme.robot.GoToStatus
+import kr.ac.kw.followme.robot.RobotBattery
 import kr.ac.kw.followme.robot.RobotController
 import kr.ac.kw.followme.robot.RobotListener
 import kr.ac.kw.followme.robot.TtsStatus
@@ -27,6 +28,7 @@ class GuideStateMachine(
     private val logger: GuideLogger = GuideLogger.NOOP,
     private val scope: CoroutineScope,
     private val homeBase: String = "home base",
+    private val standbyLocation: String = "새빛관 출입문",
     private val selectTimeoutMillis: Long = 60_000,
     private val recoverDelayMillis: Long = 2_500,
 ) : RobotListener {
@@ -35,6 +37,26 @@ class GuideStateMachine(
     val state: StateFlow<GuideState> = _state.asStateFlow()
 
     private var timeoutJob: Job? = null
+    private var connected = false
+    private val _adminMode = MutableStateFlow(false)
+    val adminMode = _adminMode.asStateFlow()
+    private val _battery = MutableStateFlow<RobotBattery?>(null)
+    val battery = _battery.asStateFlow()
+
+    fun startBatteryMonitoring(simulateLow: Boolean) {
+        val previous = state.value
+        if (!robot.isReady() || (previous != GuideState.Idle && previous !is GuideState.Error)) return
+        _adminMode.value = true
+        onBatteryChanged(robot.getBattery())
+        if (simulateLow && state.value == previous) dispatch(GuideEvent.BatteryReturn)
+    }
+
+    fun exitAdminMode() {
+        _adminMode.value = false
+        if (state.value == GuideState.Docking || state.value == GuideState.Charging) {
+            dispatch(GuideEvent.ReturnToStandby)
+        }
+    }
 
     /** Activity.onStart 에서 호출. 로봇 콜백을 받기 시작한다. */
     fun start() {
@@ -45,12 +67,15 @@ class GuideStateMachine(
     fun stop() {
         robot.removeListener(this)
         timeoutJob?.cancel()
+        connected = false
+        _battery.value = null
     }
 
     /** UI 에서 올라오는 사용자 이벤트의 진입점. */
     fun onEvent(event: GuideEvent) = dispatch(event)
 
     private fun dispatch(event: GuideEvent) {
+        if (event == GuideEvent.BatteryReturn && !_adminMode.value) return
         val prev = _state.value
         val next = GuideTransitions.transition(prev, event)
         if (next == prev) return // 정의되지 않은 조합은 조용히 무시
@@ -66,6 +91,7 @@ class GuideStateMachine(
             )
         )
         _state.value = next
+        if (prev == GuideState.Docking && next is GuideState.Error) _adminMode.value = false
         onEnter(next, event)
     }
 
@@ -116,10 +142,17 @@ class GuideStateMachine(
             }
 
             is GuideState.Returning -> {
-                // 작별 인사와 이동을 동시에 시작한다 (temi 는 이동 중에도 말할 수 있다 — 확인 필요).
-                robot.speak("안내를 마칩니다. 대기 장소로 돌아가는 중입니다. 이용해 주셔서 감사합니다.")
-                robot.goTo(homeBase)
+                if (event != GuideEvent.ReturnToStandby) robot.speak("안내를 마치고 새빛관 출입문으로 돌아갑니다.")
+                robot.goTo(standbyLocation)
             }
+
+            GuideState.Docking -> {
+                robot.speak("배터리가 80퍼센트 이하이므로 충전을 위해 홈베이스로 이동합니다.")
+                if (_battery.value?.isCharging == true) dispatch(GuideEvent.DockDetected)
+                else robot.goTo(homeBase)
+            }
+
+            GuideState.Charging -> onBatteryChanged(robot.getBattery())
 
             is GuideState.Error ->
                 robot.speak("죄송합니다. 지금은 길 안내를 마칠 수 없습니다. 가까운 안내판을 확인하거나 사무실에 문의해 주세요.")
@@ -141,7 +174,8 @@ class GuideStateMachine(
     override fun onGoToStatusChanged(location: String, status: GoToStatus, description: String) {
         val expected = when (val current = state.value) {
             is GuideState.Navigating -> current.dest.route.getOrNull(current.seg)?.location
-            GuideState.Returning -> homeBase
+            GuideState.Returning -> standbyLocation
+            GuideState.Docking -> homeBase
             else -> null
         } ?: return
         if (!location.trim().equals(expected.trim(), ignoreCase = true)) return
@@ -157,5 +191,35 @@ class GuideStateMachine(
         if (status == TtsStatus.COMPLETED) dispatch(GuideEvent.TtsCompleted)
     }
 
-    override fun onRobotReady(isReady: Boolean) = Unit
+    override fun onRobotReady(isReady: Boolean) {
+        if (!isReady) {
+            connected = false
+            _battery.value = null
+            return
+        }
+        if (connected) return
+        connected = true
+        val previous = state.value
+        onBatteryChanged(robot.getBattery())
+        if (previous != state.value) return
+        when (previous) {
+            GuideState.Idle -> dispatch(GuideEvent.ReturnToStandby)
+            GuideState.Returning -> robot.goTo(standbyLocation)
+            GuideState.Docking -> if (_adminMode.value) robot.goTo(homeBase)
+            else -> Unit
+        }
+    }
+
+    override fun onBatteryChanged(battery: RobotBattery?) {
+        val reading = battery?.takeIf { it.percent in 0..100 }
+        _battery.value = reading
+        if (!_adminMode.value || reading == null || !robot.isReady()) return
+        when (state.value) {
+            GuideState.Docking -> if (reading.isCharging) dispatch(GuideEvent.DockDetected)
+            GuideState.Charging -> if (reading.percent == 100) {
+                exitAdminMode()
+            }
+            else -> if (reading.percent <= 80) dispatch(GuideEvent.BatteryReturn)
+        }
+    }
 }

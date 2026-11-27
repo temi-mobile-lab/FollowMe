@@ -24,6 +24,16 @@
       "arrivalMessage": "1층 엘리베이터에 도착했습니다. 휴대폰으로 QR 코드를 스캔하면 새빛관 층별 안내도를 볼 수 있어요."
     },
     {
+      "id": "saebit_restroom_1f",
+      "displayName": "1층 화장실",
+      "voiceAliases": ["화장실", "일층 화장실"],
+      "category": "편의시설",
+      "building": "새빛관",
+      "floor": 1,
+      "route": [{"location": "1층 화장실", "say": ""}],
+      "arrivalMessage": "1층 화장실에 도착했습니다."
+    },
+    {
       "id": "saebit_room_101",
       "displayName": "101호",
       "voiceAliases": ["101", "백일호", "101호 강의실"],

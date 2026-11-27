@@ -16,6 +16,9 @@ sealed interface GuideEvent {
     data object UserConfirmed : GuideEvent
     data object UserCancelled : GuideEvent
     data object ArrivalConfirmed : GuideEvent
+    data object ReturnToStandby : GuideEvent
+    data object BatteryReturn : GuideEvent
+    data object DockDetected : GuideEvent
 
     // --- 로봇 콜백 ---------------------------------------------------------
     data object GoToComplete : GuideEvent
@@ -37,6 +40,9 @@ sealed interface GuideEvent {
             is UserConfirmed -> "UserConfirmed"
             is UserCancelled -> "UserCancelled"
             is ArrivalConfirmed -> "ArrivalConfirmed"
+            ReturnToStandby -> "ReturnToStandby"
+            BatteryReturn -> "BatteryReturn"
+            DockDetected -> "DockDetected"
             is GoToComplete -> "GoToComplete"
             is GoToAbort -> "GoToAbort"
             is TtsCompleted -> "TtsCompleted"

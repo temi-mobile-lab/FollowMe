@@ -34,7 +34,7 @@ class KoreanGuideInterpreter(private val fallback: VoiceIntentInterpreter? = nul
         return fallback?.interpret(heardText, state, catalog) ?: VoiceIntent.Unknown(
             when (state) {
                 is GuideState.Confirming -> "출발하려면 네, 다시 고르려면 취소라고 말씀해 주세요."
-                is GuideState.Arrived -> "다음 목적지나 홈베이스 복귀라고 말씀해 주세요."
+                is GuideState.Arrived -> "다음 목적지나 안내 종료라고 말씀해 주세요."
                 else -> "안내할 목적지 이름을 말씀해 주세요."
             }
         )
@@ -50,7 +50,7 @@ class KoreanGuideInterpreter(private val fallback: VoiceIntentInterpreter? = nul
         )
         val confirmations = setOf("네", "예", "응", "그래", "좋아요", "출발", "출발해", "출발해줘", "시작", "시작해줘", "가자", "안내시작")
         val cancellations = setOf("아니", "아니요", "취소", "안내취소", "취소해줘", "다시선택", "다시선택할래")
-        val returnCommands = setOf("홈베이스", "홈베이스복귀", "홈베이스로복귀", "홈베이스로돌아가", "홈베이스로돌아가줘",
-            "홈베이스로가줘", "홈베이스로가", "복귀", "안내완료", "안내종료", "안내끝", "완료", "끝")
+        val returnCommands = setOf("출입문복귀", "출입문으로복귀", "출입문으로돌아가", "출입문으로돌아가줘",
+            "복귀", "안내완료", "안내종료", "안내끝", "완료", "끝")
     }
 }

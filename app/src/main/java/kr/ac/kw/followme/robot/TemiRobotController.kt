@@ -4,11 +4,13 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
+import com.robotemi.sdk.BatteryData
 import com.robotemi.sdk.Robot
 import com.robotemi.sdk.SttLanguage
 import com.robotemi.sdk.SttRequest
 import com.robotemi.sdk.TtsRequest
 import com.robotemi.sdk.listeners.OnDetectionStateChangedListener
+import com.robotemi.sdk.listeners.OnBatteryStatusChangedListener
 import com.robotemi.sdk.listeners.OnConversationStatusChangedListener
 import com.robotemi.sdk.listeners.OnGoToLocationStatusChangedListener
 import com.robotemi.sdk.listeners.OnRobotReadyListener
@@ -40,6 +42,7 @@ import java.util.UUID
 class TemiRobotController(private val context: Context) :
     RobotController,
     OnRobotReadyListener,
+    OnBatteryStatusChangedListener,
     Robot.TtsListener,
     Robot.AsrListener,
     OnConversationStatusChangedListener,
@@ -54,16 +57,18 @@ class TemiRobotController(private val context: Context) :
     private var ready = false
 
     override fun start() {
-        robot.addOnRobotReadyListener(this)
+        robot.addOnBatteryStatusChangedListener(this)
         robot.addTtsListener(this)
         robot.addAsrListener(this)
         robot.addOnConversationStatusChangedListener(this)
         robot.addOnGoToLocationStatusChangedListener(this)
         robot.addOnDetectionStateChangedListener(this)
+        robot.addOnRobotReadyListener(this)
     }
 
     override fun stop() {
         robot.removeOnRobotReadyListener(this)
+        robot.removeOnBatteryStatusChangedListener(this)
         robot.removeTtsListener(this)
         robot.removeAsrListener(this)
         robot.removeOnConversationStatusChangedListener(this)
@@ -112,6 +117,14 @@ class TemiRobotController(private val context: Context) :
     override fun getLocations(): List<String> = robot.locations
 
     override fun isReady(): Boolean = ready
+
+    private fun BatteryData.toRobotBattery() = RobotBattery(level, isCharging)
+
+    override fun getBattery(): RobotBattery? = if (ready) robot.batteryData?.toRobotBattery() else null
+
+    override fun onBatteryStatusChanged(batteryData: BatteryData?) {
+        if (ready) listeners.toList().forEach { it.onBatteryChanged(batteryData?.toRobotBattery()) }
+    }
 
     override fun isVoiceAvailable(): Boolean = ready && robot.isSelectedKioskApp()
 

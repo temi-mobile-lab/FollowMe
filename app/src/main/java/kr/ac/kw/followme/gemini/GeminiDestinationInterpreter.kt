@@ -63,8 +63,9 @@ class GeminiDestinationInterpreter(
             - "네", "가자", "시작해줘", "그래" 처럼 동의하는 말이면 action=confirm.
             - "아니", "취소", "그만", "다시 선택할래" 처럼 멈추거나 되돌리고 싶어하면 action=cancel.
             - 도착 후 다음 목적지를 요청하면 action=selectDestination. 이미 도착한 장소를 말하거나
-              목적지를 정하지 않았으면 action=answer 로 다른 목적지와 홈베이스 복귀 중에서 선택하도록 돕는다.
-              "안내 끝", "홈베이스로 돌아가"처럼 종료를 명확히 요청하면 action=done.
+              목적지를 정하지 않았으면 action=answer 로 다른 목적지와 새빛관 출입문 복귀 중에서 선택하도록 돕는다.
+              "안내 끝", "출입문으로 돌아가"처럼 종료를 명확히 요청하면 action=done.
+              홈베이스 충전 복귀를 요청하면 관리자 메뉴에서 이용할 수 있다고 action=answer 로 알려 준다.
               "고마워"처럼 단순한 인사에는 action=answer 로 답한다.
             - 길 안내와 무관한 질문이면 action=answer 로 한국어로 짧게 답한다. 모르는 정보는 지어내지 않는다.
             - 무슨 말인지 모르겠으면 action=unknown 으로 다시 말해 달라고 한다.
@@ -80,6 +81,8 @@ class GeminiDestinationInterpreter(
         is GuideState.Navigating, is GuideState.WaypointGuide -> "이동 중이다. 급한 취소가 아니면 반응하지 않는다."
         is GuideState.Recovering -> "경로를 재시도하는 중이다."
         is GuideState.Returning -> "대기 장소로 복귀하는 중이다."
+        GuideState.Docking -> "충전을 위해 홈베이스로 이동 중이다."
+        GuideState.Charging -> "홈베이스에서 충전을 기다리는 중이다."
         is GuideState.Error -> "오류로 안내를 마친 상태다."
         is GuideState.WaitingUser -> "사용자를 기다리는 중이다."
     }

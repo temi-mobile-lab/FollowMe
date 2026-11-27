@@ -31,9 +31,15 @@ class MainActivity : ComponentActivity() {
             val needsVoiceSetup by viewModel.voiceSetupRequired.collectAsStateWithLifecycle()
 
             val departureMessage by viewModel.departureMessage.collectAsStateWithLifecycle()
+            val adminMode by viewModel.adminMode.collectAsStateWithLifecycle()
+            val battery by viewModel.battery.collectAsStateWithLifecycle()
             FollowMeApp(
                 departureMessage = departureMessage,
                 state = state,
+                adminMode = adminMode,
+                batteryPercent = battery?.percent,
+                onBatteryMode = viewModel::startBatteryMonitoring,
+                onExitAdmin = viewModel::exitAdminMode,
                 destinations = viewModel.catalog.destinations,
                 onEvent = viewModel::onEvent,
                 onVoiceSetup = if (needsVoiceSetup) viewModel::requestVoiceSetup else null,

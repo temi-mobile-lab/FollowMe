@@ -152,7 +152,7 @@ private fun ArrivalDetails(
                 modifier = Modifier.fillMaxWidth(),
             )
             SecondaryButton(
-                text = "홈베이스로 복귀",
+                text = "안내 종료 · 출입문 복귀",
                 icon = Icons.Rounded.Home,
                 onClick = onDone,
                 modifier = Modifier.fillMaxWidth(),

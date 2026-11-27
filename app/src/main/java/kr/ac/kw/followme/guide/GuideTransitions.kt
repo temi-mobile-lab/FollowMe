@@ -10,7 +10,7 @@ package kr.ac.kw.followme.guide
  * ## 취소(UserCancelled) 처리 방침
  * 스펙 문서는 "어느 상태든 사용자가 취소하면 안내 종료 TTS 후 Returning 으로 간다"고 했지만,
  * 그대로 적용하면 Selecting/Confirming 처럼 **로봇이 아직 출발하지 않은** 상태에서도 매번
- * "안내를 마칩니다" TTS 와 home base goTo 가 발생해 어색하다. 그래서 로봇이 실제로 움직이기
+ * "안내를 마칩니다" TTS 와 출입문 복귀 가 발생해 어색하다. 그래서 로봇이 실제로 움직이기
  * 시작한 뒤(Navigating 이후)에만 Returning 으로 보내고, 그 전(Selecting/Confirming)에는
  * 한 단계 뒤로 돌아가는 것으로 구현했다. 팀 논의 후 다르게 가도 된다.
  *
@@ -24,17 +24,30 @@ object GuideTransitions {
     /** 이 횟수를 넘겨 실패하면 Recovering → Error 로 간다. */
     const val MAX_RETRY = 3
 
-    fun transition(state: GuideState, event: GuideEvent): GuideState = when (state) {
-        is GuideState.Idle -> idle(event)
-        is GuideState.Selecting -> selecting(event)
-        is GuideState.Confirming -> confirming(state, event)
-        is GuideState.Navigating -> navigating(state, event)
-        is GuideState.WaypointGuide -> waypointGuide(state, event)
-        is GuideState.Arrived -> arrived(state, event)
-        is GuideState.Recovering -> recovering(state, event)
-        is GuideState.Returning -> returning(state, event)
-        is GuideState.Error -> error(state, event)
-        is GuideState.WaitingUser -> waitingUser(state, event)
+    fun transition(state: GuideState, event: GuideEvent): GuideState {
+        when (event) {
+            GuideEvent.BatteryReturn -> return GuideState.Docking
+            GuideEvent.ReturnToStandby -> return GuideState.Returning
+            else -> Unit
+        }
+        return when (state) {
+            is GuideState.Idle -> idle(event)
+            is GuideState.Selecting -> selecting(event)
+            is GuideState.Confirming -> confirming(state, event)
+            is GuideState.Navigating -> navigating(state, event)
+            is GuideState.WaypointGuide -> waypointGuide(state, event)
+            is GuideState.Arrived -> arrived(state, event)
+            is GuideState.Recovering -> recovering(state, event)
+            is GuideState.Returning -> returning(state, event)
+            GuideState.Docking -> when (event) {
+                GuideEvent.GoToComplete, GuideEvent.DockDetected -> GuideState.Charging
+                is GuideEvent.GoToAbort -> GuideState.Error("홈베이스로 이동하지 못했습니다. ${event.description}")
+                else -> state
+            }
+            GuideState.Charging -> state
+            is GuideState.Error -> error(state, event)
+            is GuideState.WaitingUser -> waitingUser(state, event)
+        }
     }
 
     private fun idle(event: GuideEvent): GuideState = when (event) {
@@ -67,7 +80,7 @@ object GuideTransitions {
 
         is GuideEvent.GoToAbort -> GuideState.Recovering(state.dest, state.seg, retry = state.retry + 1)
 
-        // 이동을 시작한 뒤의 취소는 실제로 복귀 동작(TTS + goTo home base)이 필요하다.
+        // 이동을 시작한 뒤의 취소는 실제로 복귀 동작(TTS + 출입문 이동)이 필요하다.
         is GuideEvent.UserCancelled -> GuideState.Returning
 
         // (확장) 사람 감지: 따라오던 사용자를 놓치면 제자리에서 기다린다.
@@ -106,6 +119,7 @@ object GuideTransitions {
 
     private fun returning(state: GuideState.Returning, event: GuideEvent): GuideState = when (event) {
         is GuideEvent.GoToComplete -> GuideState.Idle
+        is GuideEvent.GoToAbort -> GuideState.Error("새빛관 출입문으로 이동하지 못했습니다. ${event.description}")
         else -> state
     }
 

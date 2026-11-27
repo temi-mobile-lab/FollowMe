@@ -33,8 +33,7 @@ class FakeRobotController(
     private var speakJob: Job? = null
     private var ready = true
 
-    /** 연결할 실제 로봇이 없어서 할 일이 없다. */
-    override fun start() = Unit
+    override fun start() = setReady(true)
     override fun stop() = Unit
 
     override fun addListener(listener: RobotListener) {
@@ -78,6 +77,8 @@ class FakeRobotController(
     override fun getLocations(): List<String> = savedLocations.toList()
 
     override fun isReady(): Boolean = ready
+
+    override fun getBattery() = RobotBattery(100, false)
 
     // 가짜 로봇은 마이크가 없다. startListening/stopListening 은 상태만 기록해 두고,
     // 실제 인식 결과는 테스트/에뮬레이터에서 [simulateSpeech] 로 직접 흘려보낸다.
