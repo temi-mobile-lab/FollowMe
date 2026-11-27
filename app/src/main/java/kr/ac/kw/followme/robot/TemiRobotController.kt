@@ -226,8 +226,10 @@ class TemiRobotController(private val context: Context) :
         GoToSpeed.VERY_SLOW -> SpeedLevel.VERY_SLOW
         GoToSpeed.SLOW -> SpeedLevel.SLOW
         GoToSpeed.MEDIUM -> SpeedLevel.MEDIUM
-        GoToSpeed.HIGH -> SpeedLevel.HIGH
+        // SDK는 사용자 지정 값을 HIGH 인스턴스에 보관하므로 두 경우 모두 속도를 명시한다.
+        GoToSpeed.HIGH -> SpeedLevel.customSpeed(0.9f)
         GoToSpeed.VERY_HIGH -> SpeedLevel.VERY_HIGH
+        GoToSpeed.GUIDE -> SpeedLevel.customSpeed(0.96f)
     }
 
     private companion object {

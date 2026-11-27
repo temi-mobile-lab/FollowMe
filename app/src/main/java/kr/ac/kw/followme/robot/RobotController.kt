@@ -28,9 +28,9 @@ interface RobotController {
 
     /**
      * 저장된 위치로 이동을 시작한다. 결과는 [RobotListener.onGoToStatusChanged] 로 온다.
-     * @param speed temi SpeedLevel. 동행 안내와 홈베이스 복귀의 기본 속도는 중속(MEDIUM)이다.
+     * @param speed 안내와 복귀의 기본 주행 속도는 0.96 m/s다(최고 단계 1.2 m/s의 80%).
      */
-    fun goTo(location: String, speed: GoToSpeed = GoToSpeed.MEDIUM)
+    fun goTo(location: String, speed: GoToSpeed = GoToSpeed.GUIDE)
 
     /** 진행 중인 이동을 멈춘다. */
     fun stopMovement()
@@ -60,8 +60,8 @@ interface RobotController {
     fun stopListening()
 }
 
-/** temi SDK 의 SpeedLevel 과 1:1 대응 (navigation.model.SpeedLevel). */
-enum class GoToSpeed { VERY_SLOW, SLOW, MEDIUM, HIGH, VERY_HIGH }
+/** 테미의 기본 주행 단계와 안내용 속도. */
+enum class GoToSpeed { VERY_SLOW, SLOW, MEDIUM, HIGH, VERY_HIGH, GUIDE }
 
 data class RobotBattery(val percent: Int, val isCharging: Boolean)
 
